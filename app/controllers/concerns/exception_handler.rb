@@ -12,7 +12,7 @@ module ExceptionHandler
       render json: { message: "Missing parameter: #{e.param}" }, status: :bad_request
     end
 
-    rescue_from ActiveRecord::RecordNotUnique, Pagy::OverflowError do |e|
+    rescue_from ActiveRecord::RecordNotUnique do |e|
       render json: { message: e.message }, status: :unprocessable_entity
     end
   end

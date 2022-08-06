@@ -3,8 +3,8 @@
 class BaseCollection
   include Pagy::Backend
 
-  PAGE = 1
   PER_PAGE = 5
+  MAX_PER_PAGE = 50
 
   attr_reader :params, :relation
 
@@ -15,11 +15,12 @@ class BaseCollection
 
   def results
     @results ||= begin
-      pagy, records = pagy(filtered, page: params[:page] || PAGE, limit: params[:per_page] || PER_PAGE)
+      pagy, records = pagy(filtered, page: page, limit: per_page)
 
       {
         data: records,
-        page_info: { prev: pagy.prev, next: pagy.next, items: pagy.limit, count: pagy.count, page: pagy.page }
+        page_info: { page: pagy.page, pages: pagy.pages, per_page: pagy.limit,
+                     count: pagy.count, prev: pagy.prev, next: pagy.next }
       }
     end
   end
@@ -28,6 +29,15 @@ class BaseCollection
 
   def filtered
     raise NotImplementedError
+  end
+
+  def page
+    [ params[:page].to_i, 1 ].max
+  end
+
+  def per_page
+    requested = params[:per_page].to_i
+    requested.positive? ? [ requested, MAX_PER_PAGE ].min : PER_PAGE
   end
 
   def status_filter
