@@ -6,7 +6,9 @@ module SerializerHandler
 
     ActiveModelSerializers::SerializableResource.new(collection,
                                                      each_serializer: serializer,
-                                                     adapter: :json)
+                                                     adapter: :json,
+                                                     scope: current_user,
+                                                     scope_name: :current_user)
                                                 .as_json
   end
 end
