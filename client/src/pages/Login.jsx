@@ -1,5 +1,4 @@
 import { useContext, useState } from 'react';
-import { Button, Container, Form } from 'react-bootstrap';
 import { useLocation, useNavigate } from 'react-router';
 import { AuthContext } from '../providers/AuthProvider';
 
@@ -12,8 +11,8 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setSubmitting(true);
     setError(null);
     try {
@@ -27,20 +26,26 @@ const Login = () => {
   };
 
   return (
-    <Container>
-      <Form onSubmit={handleSubmit}>
-        {error && <p role="alert" className="text-danger">{error}</p>}
-        <Form.Group className="mb-3" controlId="email">
-          <Form.Label>Email address</Form.Label>
-          <Form.Control type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-        </Form.Group>
-        <Form.Group className="mb-3" controlId="password">
-          <Form.Label>Password</Form.Label>
-          <Form.Control type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-        </Form.Group>
-        <Button type="submit" disabled={submitting}>Sign in</Button>
-      </Form>
-    </Container>
+    <section className="signin" aria-labelledby="signin-heading">
+      <h1 id="signin-heading">Sign in</h1>
+      <p>Sign in to apply for roles and see where your applications stand.</p>
+      <form onSubmit={handleSubmit} noValidate={false}>
+        {error && <p className="notice notice--error" role="alert">{error}</p>}
+        <div className="field">
+          <label htmlFor="email">Email address</label>
+          <input id="email" type="email" autoComplete="email" required value={email}
+            onChange={(event) => setEmail(event.target.value)} />
+        </div>
+        <div className="field">
+          <label htmlFor="password">Password</label>
+          <input id="password" type="password" autoComplete="current-password" required value={password}
+            onChange={(event) => setPassword(event.target.value)} />
+        </div>
+        <button type="submit" className="button" disabled={submitting}>
+          {submitting ? 'Signing in…' : 'Sign in'}
+        </button>
+      </form>
+    </section>
   );
 };
 

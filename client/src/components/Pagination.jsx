@@ -1,50 +1,31 @@
-const Pagination = ({ pageInfo, setPage }) => {
-  const { page, pages } = pageInfo
-
-  const prev = page - 1 > 0;
-  const next = page + 1 <= pages;
-
-  const onPageChange = (type) => {
-    if (type === 'next') return next && setPage(page + 1)
-    if (type === 'prev') return prev && setPage(page - 1)
-
-    setPage(type)
-  };
+const Pagination = ({ pageInfo, onPageChange }) => {
+  const { page, pages } = pageInfo;
+  if (!pages || pages < 2) return null;
 
   return (
-    <div
-      className="d-flex justify-content-center"
-      style={{ marginTop: "1rem" }}
-    >
-      <nav aria-label="Page navigation example">
-        <ul className="pagination">
-          {prev &&
-            <li className="page-item">
-              <a className="page-link" onClick={() => onPageChange("prev")}>
-                Previous
-              </a>
-            </li>
-          }
-          {[...Array(pages)].map((el, index) => (
-            <li key={index} className={`page-item ${index + 1 === page ? "active" : null}`}>
-              <a
-                className="page-link"
-                onClick={() => onPageChange(index + 1)}
-              >
-                {index + 1}
-              </a>
-            </li>
-          ))}
-          {next &&
-            <li className="page-item">
-              <a className="page-link" onClick={() => onPageChange("next")}>
-                Next
-              </a>
-            </li>
-          }
-        </ul>
-      </nav>
-    </div>
+    <nav className="pagination" aria-label="Pagination">
+      <button type="button" className="button button--ghost" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
+        Previous
+      </button>
+      <ol>
+        {Array.from({ length: pages }, (_, index) => index + 1).map((number) => (
+          <li key={number}>
+            <button
+              type="button"
+              className="pagination__page"
+              aria-current={number === page ? 'page' : undefined}
+              aria-label={`Page ${number}`}
+              onClick={() => onPageChange(number)}
+            >
+              {number}
+            </button>
+          </li>
+        ))}
+      </ol>
+      <button type="button" className="button button--ghost" disabled={page >= pages} onClick={() => onPageChange(page + 1)}>
+        Next
+      </button>
+    </nav>
   );
 };
 

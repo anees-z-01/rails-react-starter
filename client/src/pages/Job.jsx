@@ -1,34 +1,43 @@
-import { useContext, useEffect, useState } from "react";
-import { Button, Card, Container, Form } from "react-bootstrap";
-import { useParams } from "react-router";
+import { useCallback, useContext, useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router';
 
-import { AuthContext } from "../providers/AuthProvider";
-import { applyToJob, fetchJob, updateJobStatus } from "../api/jobs";
-import { jobStatuses } from "../constants/jobConstants";
-import { dateHelper } from "../helper/dateHelper";
+import { applyToJob, fetchJob, updateJobStatus } from '../api/jobs';
+import RequestState from '../components/RequestState';
+import StatusBadge from '../components/StatusBadge';
+import { jobStatuses } from '../constants/jobConstants';
+import { formatDate } from '../helper/formatDate';
+import useRequest from '../hooks/useRequest';
+import { AuthContext } from '../providers/AuthProvider';
+
+const ApplyPanel = ({ job, authenticated, busy, onApply }) => {
+  if (job.application_status) {
+    return <p>Your application is <StatusBadge status={job.application_status} /></p>;
+  }
+  if (job.status !== 'open') return <p>This role is not taking applications.</p>;
+  if (!authenticated) {
+    return <p><Link to="/login" state={{ from: `/jobs/${job.slug}` }}>Sign in</Link> to apply for this role.</p>;
+  }
+  return <button type="button" className="button" disabled={busy} onClick={onApply}>Apply for this role</button>;
+};
 
 const Job = () => {
   const { slug } = useParams();
-  const { isAdmin } = useContext(AuthContext);
+  const { authenticated, isAdmin } = useContext(AuthContext);
+  const load = useCallback((signal) => fetchJob(slug, { signal }), [slug]);
+  const { data, loading, error } = useRequest(load);
   const [job, setJob] = useState(null);
-  const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState(null);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    fetchJob(slug, { signal: controller.signal })
-      .then(setJob)
-      .catch((err) => err.name !== "AbortError" && setError(err.message));
-    return () => controller.abort();
-  }, [slug]);
+  useEffect(() => setJob(data), [data]);
 
   const run = async (action) => {
     setBusy(true);
-    setError(null);
+    setActionError(null);
     try {
       await action();
     } catch (err) {
-      setError(err.message);
+      setActionError(err.message);
     } finally {
       setBusy(false);
     }
@@ -42,31 +51,36 @@ const Job = () => {
   const changeStatus = (status) => run(async () => setJob(await updateJobStatus(job.slug, status)));
 
   return (
-    <Container>
-      {error && <p role="alert" className="text-danger">{error}</p>}
-      {job && (
-        <Card>
-          <Card.Header as="h1" className="h4">{job.title}</Card.Header>
-          <Card.Body>
-            <Card.Text>{job.description}</Card.Text>
-            <Card.Text>Posted {dateHelper(job.created_at)} · {job.status}</Card.Text>
-            {job.application_status ? (
-              <p>Your application: {job.application_status}</p>
-            ) : (
-              job.status === "open" && <Button disabled={busy} onClick={apply}>Apply</Button>
-            )}
-            {isAdmin && (
-              <Form.Select aria-label="Job status" className="mt-3 w-50" disabled={busy} value={job.status}
-                onChange={(e) => changeStatus(e.target.value)}>
-                {jobStatuses.map(({ label, value }) => (
-                  <option key={value} value={value}>{label}</option>
-                ))}
-              </Form.Select>
-            )}
-          </Card.Body>
-        </Card>
-      )}
-    </Container>
+    <article className="job">
+      <Link to="/" className="back-link">← All roles</Link>
+      <RequestState loading={loading || !job} error={error}>
+        {job && (
+          <>
+            <header className="job__header">
+              <StatusBadge status={job.status} />
+              <h1>{job.title}</h1>
+              <p className="job__posted">Posted {formatDate(job.created_at)}</p>
+            </header>
+            <div className="job__body">
+              <p className="job__description">{job.description}</p>
+              <aside className="job__panel" aria-label="Your application">
+                <ApplyPanel job={job} authenticated={authenticated} busy={busy} onApply={apply} />
+                {actionError && <p className="field-error" role="alert">{actionError}</p>}
+                {isAdmin && (
+                  <div className="field">
+                    <label htmlFor="job-status">Listing status (admin)</label>
+                    <select id="job-status" value={job.status} disabled={busy}
+                      onChange={(event) => changeStatus(event.target.value)}>
+                      {jobStatuses.map(({ label, value }) => <option key={value} value={value}>{label}</option>)}
+                    </select>
+                  </div>
+                )}
+              </aside>
+            </div>
+          </>
+        )}
+      </RequestState>
+    </article>
   );
 };
 

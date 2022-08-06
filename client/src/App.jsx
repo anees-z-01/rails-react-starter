@@ -6,6 +6,7 @@ import Applications from './pages/Applications';
 import Home from './pages/Home';
 import Job from './pages/Job';
 import Login from './pages/Login';
+import NotFound from './pages/NotFound';
 
 function App() {
   return (
@@ -13,10 +14,11 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/jobs/:slug" element={<Job />} />
         <Route element={<RequireAuth />}>
           <Route path="/applications" element={<Applications />} />
-          <Route path="/jobs/:slug" element={<Job />} />
         </Route>
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Layout>
   );

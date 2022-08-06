@@ -14,9 +14,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "bootstrap": "^5.3.8",
     "react": "^19.3.1",
-    "react-bootstrap": "^2.10.10",
     "react-dom": "^19.3.1",
     "react-router": "^7.18.5"
   },
@@ -25,6 +23,7 @@
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.1",
     "@vitejs/plugin-react": "^5.2.0",
     "eslint": "^9.39.5",
     "eslint-plugin-react-hooks": "^5.2.0",

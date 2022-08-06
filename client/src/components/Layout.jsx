@@ -1,50 +1,40 @@
 import { useContext } from 'react';
-import { Button, Container, Nav, Navbar } from 'react-bootstrap';
-import { NavLink, Outlet, useNavigate } from 'react-router';
+import { Link, NavLink, useNavigate } from 'react-router';
 import { AuthContext } from '../providers/AuthProvider';
 
 const Layout = ({ children }) => {
   const navigate = useNavigate();
-
-  const { authenticated, signOut } = useContext(AuthContext);
-
-  const renderUILinks = () => {
-    if (authenticated) {
-      return (
-        <Button onClick={() => signOut().then(() => navigate('/login'))}>Logout</Button>
-      )
-    } else {
-      return (
-        <Nav.Link eventKey="/login">Login</Nav.Link>
-      )
-    };
-  };
-
-  const handleSelect = (eventKey) => {
-    navigate(eventKey)
-  };
+  const { authenticated, user, isAdmin, signOut } = useContext(AuthContext);
 
   return (
     <>
-      <Navbar expand="md" bg="dark" variant="dark">
-        <Container>
-          <Navbar.Brand style={{ cursor: 'pointer' }} onClick={() => navigate("/")}>EarlyDay</Navbar.Brand>
-          <Navbar.Toggle aria-controls="response-navbar-nav" />
-          <Navbar.Collapse id="responsive-navbar-nav">
-            <Nav className="me-auto" onSelect={handleSelect}>
-              <Nav.Link as={NavLink} to="/" >Home</Nav.Link>
-              <Nav.Link as={NavLink} to="/applications" >Applications</Nav.Link>
-            </Nav>
-            <Nav className="justify-content-end" onSelect={handleSelect}>
-              {renderUILinks()}
-            </Nav>
-          </Navbar.Collapse>
-        </Container>
-      </Navbar>
-      <Outlet />
-      <Container className="mt-3">
-        {children}
-      </Container>
+      <a className="skip-link" href="#main">Skip to content</a>
+      <header className="masthead">
+        <div className="masthead__inner">
+          <Link to="/" className="wordmark">Shortlist</Link>
+          <nav aria-label="Main" className="masthead__nav">
+            <NavLink to="/" end>Roles</NavLink>
+            {authenticated && <NavLink to="/applications">My applications</NavLink>}
+          </nav>
+          <div className="masthead__account">
+            {authenticated ? (
+              <>
+                <span className="masthead__user">
+                  {user.email}
+                  {isAdmin && <span className="masthead__role">admin</span>}
+                </span>
+                <button type="button" className="button button--ghost button--small"
+                  onClick={() => signOut().then(() => navigate('/login'))}>
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <NavLink to="/login" className="button button--small">Sign in</NavLink>
+            )}
+          </div>
+        </div>
+      </header>
+      <main id="main" className="page">{children}</main>
     </>
   );
 };

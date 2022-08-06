@@ -1,57 +1,74 @@
-import { useCallback, useEffect, useState } from "react";
-import { Button, Card, Form } from "react-bootstrap";
+import { useCallback, useState } from 'react';
+import { Link } from 'react-router';
 
-import Pagination from "../components/Pagination";
-import { fetchApplications, withdrawApplication } from "../api/jobApplications";
-import { jobApplicationsStatuses } from "../constants/jobConstants";
+import { fetchApplications, withdrawApplication } from '../api/jobApplications';
+import FilterTabs from '../components/FilterTabs';
+import Pagination from '../components/Pagination';
+import RequestState from '../components/RequestState';
+import StatusBadge from '../components/StatusBadge';
+import { jobApplicationsStatuses } from '../constants/jobConstants';
+import { formatDate } from '../helper/formatDate';
+import useRequest from '../hooks/useRequest';
 
 const Applications = () => {
-  const [applications, setApplications] = useState(null);
   const [page, setPage] = useState(1);
-  const [filter, setFilter] = useState("");
-  const [error, setError] = useState(null);
+  const [filter, setFilter] = useState('');
+  const [withdrawError, setWithdrawError] = useState(null);
+  const load = useCallback((signal) => fetchApplications({ page, filter, signal }), [page, filter]);
+  const { data, loading, error, reload } = useRequest(load);
+  const applications = data?.job_applications ?? [];
 
-  const load = useCallback((signal) => {
-    setError(null);
-    return fetchApplications({ page, filter, signal })
-      .then(setApplications)
-      .catch((err) => err.name !== "AbortError" && setError(err.message));
-  }, [page, filter]);
+  const changeFilter = (value) => {
+    setPage(1);
+    setFilter(value);
+  };
 
-  useEffect(() => {
-    const controller = new AbortController();
-    load(controller.signal);
-    return () => controller.abort();
-  }, [load]);
-
-  const withdraw = (id) => withdrawApplication(id).then(() => load()).catch((err) => setError(err.message));
-
-  const list = applications?.job_applications ?? [];
+  const withdraw = async (id) => {
+    setWithdrawError(null);
+    try {
+      await withdrawApplication(id);
+      reload();
+    } catch (err) {
+      setWithdrawError(err.message);
+    }
+  };
 
   return (
-    <div>
-      <h1 className="text-center">My applications</h1>
-      {error && <p role="alert" className="text-danger text-center">{error}</p>}
-      <Form.Select aria-label="Application status" className="mb-4 w-50 m-auto" value={filter}
-        onChange={(e) => { setPage(1); setFilter(e.target.value); }}>
-        {jobApplicationsStatuses.map(({ label, value }) => (
-          <option key={label} value={value}>{label}</option>
-        ))}
-      </Form.Select>
-      {applications && list.length === 0 && <p className="text-center">No applications here yet.</p>}
-      {list.map((application) => (
-        <Card key={application.id} className="mb-3">
-          <Card.Body>
-            <Card.Title>{application.job.title}</Card.Title>
-            <Card.Text>Application: {application.status} · Job: {application.job.status}</Card.Text>
-            {application.status !== "withdrawn" && (
-              <Button variant="danger" onClick={() => withdraw(application.id)}>Withdraw</Button>
-            )}
-          </Card.Body>
-        </Card>
-      ))}
-      {list.length > 0 && <Pagination pageInfo={applications.page_info} setPage={setPage} />}
-    </div>
+    <section aria-labelledby="applications-heading">
+      <div className="page__intro">
+        <h1 id="applications-heading">My applications</h1>
+        <p>Where each of your applications stands. Withdrawn ones are kept under their own tab.</p>
+      </div>
+      <FilterTabs label="Filter applications by status" value={filter} onChange={changeFilter}
+        options={jobApplicationsStatuses} />
+      {withdrawError && <p className="notice notice--error" role="alert">{withdrawError}</p>}
+      <RequestState loading={loading && !data} error={error} onRetry={reload}
+        empty={applications.length === 0} emptyText="Nothing here yet. Find a role and apply from its page.">
+        <ul className="application-list" aria-busy={loading}>
+          {applications.map((application) => (
+            <li key={application.id} className="application">
+              <div>
+                <h2 className="application__title">
+                  <Link to={`/jobs/${application.job.slug}`}>{application.job.title}</Link>
+                </h2>
+                <p className="application__meta">
+                  Applied {formatDate(application.created_at)} · role is {application.job.status}
+                </p>
+              </div>
+              <StatusBadge status={application.status} />
+              {application.status !== 'withdrawn' && (
+                <button type="button" className="button button--ghost button--small"
+                  aria-label={`Withdraw application for ${application.job.title}`}
+                  onClick={() => withdraw(application.id)}>
+                  Withdraw
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+        <Pagination pageInfo={data?.page_info ?? {}} onPageChange={setPage} />
+      </RequestState>
+    </section>
   );
 };
 
