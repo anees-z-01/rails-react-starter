@@ -225,6 +225,18 @@ RSpec.describe 'JobApplications', type: :request do
         end
       end
 
+      context 'when the application was already rejected' do
+        let(:application) { create(:job_application, user: user, status: :rejected) }
+
+        it 'keeps it rejected' do
+          delete "/api/job_applications/#{application.id}", headers: @headers.as_json
+
+          expect(response).to have_http_status(:unprocessable_entity)
+          expect(JSON.parse(response.body)['message']).to eq('Only applied or reviewed applications can be withdrawn')
+          expect(application.reload).to be_rejected
+        end
+      end
+
       context 'when job application found' do
         let(:application) { create(:job_application, user: user) }
 
@@ -386,6 +398,15 @@ RSpec.describe 'JobApplications', type: :request do
           expect(response).to have_http_status(:forbidden)
           expect(job_application.reload).to be_withdrawn
         end
+      end
+
+      it 'does not withdraw a rejected application' do
+        job_application.rejected!
+
+        patch "/api/job_applications/#{job_application.id}", params: { status: 'withdrawn' }, headers: @headers.as_json
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(job_application.reload).to be_rejected
       end
 
       it "returns not found for another user's application" do

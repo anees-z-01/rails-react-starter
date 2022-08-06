@@ -29,6 +29,18 @@ describe('Applications', () => {
     expect(screen.queryByText('Role 1')).not.toBeInTheDocument();
   });
 
+  it('only offers Withdraw on applications still in play', async () => {
+    fetchApplications.mockResolvedValue({
+      job_applications: [application(1, 'rejected'), application(2, 'reviewed'), application(3, 'withdrawn')], page_info: pageInfo,
+    });
+
+    renderWithAuth(<Applications />, { auth: applicant });
+
+    expect(await screen.findByRole('button', { name: 'Withdraw application for Role 2' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Withdraw application for Role 1' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Withdraw application for Role 3' })).not.toBeInTheDocument();
+  });
+
   it('has no status picker for reviewed or rejected', async () => {
     fetchApplications.mockResolvedValue({ job_applications: [application(1, 'applied')], page_info: pageInfo });
 

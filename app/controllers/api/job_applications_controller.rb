@@ -21,8 +21,9 @@ module Api
     end
 
     def destroy
-      job_application.withdrawn!
+      return render_not_withdrawable unless job_application.withdrawable?
 
+      job_application.withdrawn!
       render json: job_application
     end
 
@@ -33,6 +34,7 @@ module Api
       unless current_user.admin? || JobApplication::APPLICANT_STATUSES.include?(status)
         return render json: { message: "Only admins can mark an application #{status}" }, status: :forbidden
       end
+      return render_not_withdrawable if status == "withdrawn" && !application.withdrawable?
 
       if application.update(status: status)
         render json: application
@@ -42,6 +44,10 @@ module Api
     end
 
     private
+
+    def render_not_withdrawable
+      render json: { message: "Only applied or reviewed applications can be withdrawn" }, status: :unprocessable_entity
+    end
 
     def collection
       @collection ||= JobApplicationsCollection.new(

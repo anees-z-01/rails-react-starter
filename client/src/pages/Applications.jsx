@@ -10,6 +10,8 @@ import { jobApplicationsStatuses } from '../constants/jobConstants';
 import { formatDate } from '../helper/formatDate';
 import useRequest from '../hooks/useRequest';
 
+const WITHDRAWABLE = ['applied', 'reviewed'];
+
 const Applications = () => {
   const [page, setPage] = useState(1);
   const [filter, setFilter] = useState('');
@@ -56,7 +58,7 @@ const Applications = () => {
                 </p>
               </div>
               <StatusBadge status={application.status} />
-              {application.status !== 'withdrawn' && (
+              {WITHDRAWABLE.includes(application.status) && (
                 <button type="button" className="button button--ghost button--small"
                   aria-label={`Withdraw application for ${application.job.title}`}
                   onClick={() => withdraw(application.id)}>

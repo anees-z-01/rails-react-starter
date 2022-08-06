@@ -12,6 +12,10 @@ class JobApplication < ApplicationRecord
 
   enum :status, { applied: 0, reviewed: 1, rejected: 2, withdrawn: 3 }, validate: true
 
+  def withdrawable?
+    applied? || reviewed?
+  end
+
   private
 
   def job_open

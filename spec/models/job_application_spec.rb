@@ -46,4 +46,11 @@ RSpec.describe JobApplication, type: :model do
   describe 'Enum' do
     it { should define_enum_for(:status).with_values(%i[applied reviewed rejected withdrawn]).validating }
   end
+
+  describe '#withdrawable?' do
+    it 'is true only while the application is still in play' do
+      expect(JobApplication.statuses.keys.select { |status| build(:job_application, status: status).withdrawable? })
+        .to eq(%w[applied reviewed])
+    end
+  end
 end
