@@ -36,7 +36,7 @@ const AuthProvider = (props) => {
 
   const handleLogout = async (navigate) => {
     try {
-      let response = await axios.delete("api/auth/sign_out");
+      await axios.delete("api/auth/sign_out");
       localStorage.removeItem("access-token");
       setUser(null);
       navigate("/login");

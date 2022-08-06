@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Form, Card } from "react-bootstrap";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 
 import Pagination from "../components/Pagination";
 import { fetchJobs } from "../api/jobApi";

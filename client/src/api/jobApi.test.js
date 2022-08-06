@@ -1,19 +1,17 @@
 import baseApi from "./baseApi";
 import { applyJob, fetchJob, fetchJobs, updateJobStatus } from "./jobApi";
 
-jest.mock("./baseApi", () => ({
-  get: jest.fn(),
-  post: jest.fn(),
-  put: jest.fn()
+vi.mock("./baseApi", () => ({
+  default: { get: vi.fn(), post: vi.fn(), put: vi.fn() }
 }));
 
 describe("jobApi", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("fetchJobs forwards pagination and filter params", async () => {
-    const setJobs = jest.fn();
+    const setJobs = vi.fn();
     baseApi.get.mockResolvedValue({ data: { jobs: [] } });
 
     await fetchJobs(2, "closed", setJobs);
@@ -25,7 +23,7 @@ describe("jobApi", () => {
   });
 
   it("fetchJob loads and stores a single job", async () => {
-    const setJob = jest.fn();
+    const setJob = vi.fn();
     baseApi.get.mockResolvedValue({ data: { slug: "frontend-dev" } });
 
     await fetchJob("frontend-dev", setJob);
@@ -44,7 +42,7 @@ describe("jobApi", () => {
   });
 
   it("updateJobStatus updates server and local state", async () => {
-    const setJob = jest.fn();
+    const setJob = vi.fn();
     baseApi.put.mockResolvedValue({ data: { status: "closed" } });
 
     await updateJobStatus("frontend-dev", "closed", setJob);

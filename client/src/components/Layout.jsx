@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { Button, Container, Nav, Navbar } from 'react-bootstrap';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router';
 import { AuthContext } from '../providers/AuthProvider';
 
 const Layout = ({ children }) => {

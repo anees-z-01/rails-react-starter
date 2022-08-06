@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { Container, Form, Button, Card } from "react-bootstrap";
-import { useParams } from "react-router-dom";
+import { useParams } from "react-router";
 
 import { AuthContext } from "../providers/AuthProvider";
 import { applyJob, fetchJob, updateJobStatus } from "../api/jobApi";

@@ -2,14 +2,14 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 
 const defaultHeader = (config) => {
-  config.headers.common['access-token'] = Cookies.get('access-token');
-  config.headers.common['client'] = Cookies.get('client');
-  config.headers.common['uid'] = Cookies.get('uid');
+  config.headers['access-token'] = Cookies.get('access-token');
+  config.headers['client'] = Cookies.get('client');
+  config.headers['uid'] = Cookies.get('uid');
 };
 
 const baseApi = () => {
   const defaultOptions = {
-    baseURL: process.env.REACT_APP_API_URL,
+    baseURL: import.meta.env.VITE_API_URL ?? '/api',
   };
   const instance = axios.create(defaultOptions);
 

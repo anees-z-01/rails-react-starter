@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useContext, useEffect, useState } from "react";
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet } from "react-router";
 import { AuthContext } from "../providers/AuthProvider";
 
 const RequireAuth = () => {
@@ -15,7 +15,7 @@ const RequireAuth = () => {
     try {
       const res = await axios.get("/api/auth/validate_token");
       auth.setUser(res.data.data);
-    } catch (err) {
+    } catch {
       console.log('unable to validate token')
     } finally {
       setCheckingAuthStatus(false);

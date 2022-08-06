@@ -1,6 +1,5 @@
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router';
 
-import './App.css';
 import Layout from './components/Layout';
 import RequireAuth from './components/RequireAuth';
 import Applications from './pages/Applications';

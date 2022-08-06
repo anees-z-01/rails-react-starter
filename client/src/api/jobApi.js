@@ -26,7 +26,7 @@ export const fetchJob = (slug, setJob) =>
             return Promise.reject(err)
         });
 
-export const applyJob = (id, setJob) =>
+export const applyJob = (id) =>
     baseApi
         .post("/job_applications", { job_id: id })
         .then((res) => res)

@@ -1,6 +1,6 @@
 import { useContext, useState } from 'react';
 import { Button, Container, Form } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { AuthContext } from '../providers/AuthProvider';
 
 const Login = () => {
