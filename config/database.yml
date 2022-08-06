@@ -1,0 +1,14 @@
+default: &default
+  adapter: sqlite3
+  database: db/development.sqlite3
+  pool: 5
+  timeout: 5000
+
+development:
+  <<: *default
+  database: rails_exam_development
+
+
+test:
+  <<: *default
+  database: rails_exam_test

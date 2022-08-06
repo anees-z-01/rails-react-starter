@@ -1,0 +1,51 @@
+# Bundler config and installed gems
+/.bundle
+/vendor/bundle
+
+# Logs and temp files
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
+/tmp/pids/*
+!/tmp/pids/
+!/tmp/pids/.keep
+*.log
+
+# Uploaded files
+/storage/*
+!/storage/.keep
+.byebug_history
+
+# Credentials: the encrypted file has no matching master.key, so config comes from ENV
+/config/master.key
+/config/credentials.yml.enc
+/config/credentials/*.key
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# SQLite databases
+*.sqlite3
+*.sqlite3-*
+/db/*.sqlite3*
+/rails_exam_development
+/rails_exam_test
+
+# Dependencies, virtualenvs and build output
+node_modules/
+/project_venv
+/client/build/
+/client/dist/
+/client/coverage/
+/coverage/
+
+# Editor and OS files
+.DS_Store
+.idea/
+.vscode/
+
+# No automated build config in this repo
+/.github/
