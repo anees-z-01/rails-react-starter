@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_11_10_120100) do
+ActiveRecord::Schema[8.0].define(version: 2026_11_10_120200) do
   create_table "job_applications", force: :cascade do |t|
     t.integer "job_id", null: false
     t.integer "user_id", null: false
@@ -29,6 +29,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_11_10_120100) do
     t.string "slug", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_jobs_on_slug", unique: true
   end
 
   create_table "users", force: :cascade do |t|
