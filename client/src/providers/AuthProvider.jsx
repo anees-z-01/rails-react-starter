@@ -1,65 +1,38 @@
-import Cookies from 'js-cookie';
-import React, { useState } from "react";
-import axios from "axios";
+import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
+import { hasStoredSession, signIn as apiSignIn, signOut as apiSignOut, validateToken } from '../api/auth';
+import { onUnauthorized } from '../api/client';
 
-export const AuthContext = React.createContext();
+export const AuthContext = createContext(null);
 
-export const AuthConsumer = AuthContext.Consumer;
-
-const AuthProvider = (props) => {
+const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [checking, setChecking] = useState(hasStoredSession);
 
-  const handleRegister = async (user, navigate) => {
-    try {
-      let response = await axios.post("api/auth", user);
-      setUser(response.data.data);
-      navigate("/");
-    } catch (err) {
-      console.log(err.response.data.errors.full_messages);
-      alert(err.response.data.errors.full_messages);
-    }
-  };
+  useEffect(() => {
+    onUnauthorized(() => setUser(null));
+    if (!hasStoredSession()) return;
 
-  const handleLogin = async (user, navigate) => {
-    try {
-      let response = await axios.post("/api/auth/sign_in", user);
-      setUser(response.data.data);
-      Cookies.set('access-token', response.headers['access-token']);
-      Cookies.set('client', response.headers['client']);
-      Cookies.set('uid', response.headers['uid']);
-      navigate("/");
-    } catch (err) {
-      console.log(err.response.data.errors.full_messages);
-      alert(err.response.data.errors.full_messages);
-    }
-  };
+    validateToken()
+      .then(setUser)
+      .catch(() => setUser(null))
+      .finally(() => setChecking(false));
+  }, []);
 
-  const handleLogout = async (navigate) => {
-    try {
-      await axios.delete("api/auth/sign_out");
-      localStorage.removeItem("access-token");
-      setUser(null);
-      navigate("/login");
-    } catch (err) {
-      console.log(err.response.data.errors.full_messages);
-      alert(err.response.data.errors.full_messages);
-    }
-  };
+  const signIn = useCallback(async (email, password) => {
+    setUser(await apiSignIn(email, password));
+  }, []);
 
-  return (
-    <AuthContext.Provider
-      value={{
-        ...user,
-        setUser,
-        handleRegister,
-        handleLogin,
-        handleLogout,
-        authenticated: user !== null,
-      }}
-    >
-      {props.children}
-    </AuthContext.Provider>
+  const signOut = useCallback(async () => {
+    await apiSignOut();
+    setUser(null);
+  }, []);
+
+  const value = useMemo(
+    () => ({ user, checking, isAdmin: Boolean(user?.admin), authenticated: user !== null, signIn, signOut }),
+    [user, checking, signIn, signOut],
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export default AuthProvider;

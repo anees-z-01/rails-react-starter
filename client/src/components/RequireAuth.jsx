@@ -1,40 +1,15 @@
-import axios from "axios";
-import { useContext, useEffect, useState } from "react";
-import { Navigate, Outlet } from "react-router";
-import { AuthContext } from "../providers/AuthProvider";
+import { useContext } from 'react';
+import { Navigate, Outlet, useLocation } from 'react-router';
+import { AuthContext } from '../providers/AuthProvider';
 
 const RequireAuth = () => {
-  const [checkingAuthStatus, setCheckingAuthStatus] = useState(true)
-  const auth = useContext(AuthContext);
+  const { authenticated, checking } = useContext(AuthContext);
+  const location = useLocation();
 
-  const checkAuthStatus = async () => {
-    if(auth.authenticated || !localStorage.getItem('access-token')){
-      setCheckingAuthStatus(false);
-      return;
-    }
-    try {
-      const res = await axios.get("/api/auth/validate_token");
-      auth.setUser(res.data.data);
-    } catch {
-      console.log('unable to validate token')
-    } finally {
-      setCheckingAuthStatus(false);
-    };
-  };
+  if (checking) return <p role="status">Checking your session…</p>;
+  if (!authenticated) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
 
-  useEffect(()=>{
-    checkAuthStatus();
-  },[]);
-
-  if(checkingAuthStatus){
-    return(<p>Checking if logged in or not</p>);
-  }
-
-  if(!auth.authenticated) {
-    return <Navigate to="/login" />;
-  };
-
-  return <Outlet />
+  return <Outlet />;
 };
 
 export default RequireAuth;

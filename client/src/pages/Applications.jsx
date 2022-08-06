@@ -1,99 +1,58 @@
-import { useState, useContext, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button, Card, Form } from "react-bootstrap";
 
-import baseApi from "../api/baseApi";
 import Pagination from "../components/Pagination";
-import { AuthContext } from "../providers/AuthProvider";
-import { deleteJobApplication, fetchJobApplication } from "../api/jobApplicationApi";
+import { fetchApplications, withdrawApplication } from "../api/jobApplications";
 import { jobApplicationsStatuses } from "../constants/jobConstants";
 
 const Applications = () => {
-  const { authenticated } = useContext(AuthContext);
-  const [jobApplications, setJobApplication] = useState(null);
-  const [page, setPage] = useState(1)
-  const [filter, setFilter] = useState('all')
+  const [applications, setApplications] = useState(null);
+  const [page, setPage] = useState(1);
+  const [filter, setFilter] = useState("");
+  const [error, setError] = useState(null);
 
-  const updateJobStatus = (id, status) => {
-    baseApi
-      .put(`/job_applications/${id}`, { status })
-      .then(() => fetchJobApplication(page, filter, setJobApplication));
-  }
-
-  const deleteToJob = (id) => {
-    deleteJobApplication(id).then(() => fetchJobApplication(page, filter, setJobApplication))
-  };
-
-  useEffect(() => {
-    fetchJobApplication(page, filter, setJobApplication)
+  const load = useCallback((signal) => {
+    setError(null);
+    return fetchApplications({ page, filter, signal })
+      .then(setApplications)
+      .catch((err) => err.name !== "AbortError" && setError(err.message));
   }, [page, filter]);
 
-  const renderPage = () => {
-    if (authenticated) {
-      return (
-        <div>
-          <h1 className="text-center">My Applications</h1>
-          <Form.Select className="mb-4 w-50 m-auto" onChange={(e) => setFilter(e.target.value)}>
-            {jobApplicationsStatuses.map(({ label, value }) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </Form.Select>
-          {jobApplications?.job_applications?.length > 0 && (
-            <>
-              <div className="d-flex flex-wrap">
-                {jobApplications.job_applications
-                  .map((jobApplication) => (
-                    <Card key={jobApplication.id} className="mb-3" style={{ width: "24rem", margin: "auto" }}>
-                      <Card.Header as="h5">
-                        Job status
-                        <span className="float-end">
-                          {jobApplication.status}
-                        </span>
-                      </Card.Header>
-                      <Card.Body>
-                        <Card.Title>
-                          <span
-                            style={{ marginRight: "2rem", fontWeight: "bolder" }}
-                          >
-                            Title
-                          </span>
-                          {jobApplication?.job.title}
-                        </Card.Title>
-                        <Card.Text>
-                          <span
-                            style={{ marginRight: "2rem", fontWeight: "bolder" }}
-                          >
-                            Status
-                          </span>
-                          {jobApplication?.job.status}
-                        </Card.Text>
-                        <Card.Text>Update application status</Card.Text>
-                        <Card.Text>
-                        <Form.Select value={jobApplication.status} onChange={(e) => updateJobStatus(jobApplication.id, e.target.value)}>
-                            {jobApplicationsStatuses.slice(1).map(({ label, value }) => (
-                              <option key={value} value={value}>{label}</option>
-                            ))}
-                          </Form.Select>
-                        </Card.Text>
+  useEffect(() => {
+    const controller = new AbortController();
+    load(controller.signal);
+    return () => controller.abort();
+  }, [load]);
 
-                      </Card.Body>
-                      <Button variant="danger" onClick={() => deleteToJob(jobApplication.id)}>Withdraw</Button>
-                    </Card>
-                  ))}
-              </div>
-              <Pagination
-                pageInfo={jobApplications.page_info}
-                setPage={setPage}
-              />
-            </>
-          ) || <h1 className="text-center">No Job Application found</h1>
-          }
-        </div>
-      );
-    } else {
-      return <p>You must be logged in</p>;
-    }
-  };
-  return renderPage();
+  const withdraw = (id) => withdrawApplication(id).then(() => load()).catch((err) => setError(err.message));
+
+  const list = applications?.job_applications ?? [];
+
+  return (
+    <div>
+      <h1 className="text-center">My applications</h1>
+      {error && <p role="alert" className="text-danger text-center">{error}</p>}
+      <Form.Select aria-label="Application status" className="mb-4 w-50 m-auto" value={filter}
+        onChange={(e) => { setPage(1); setFilter(e.target.value); }}>
+        {jobApplicationsStatuses.map(({ label, value }) => (
+          <option key={label} value={value}>{label}</option>
+        ))}
+      </Form.Select>
+      {applications && list.length === 0 && <p className="text-center">No applications here yet.</p>}
+      {list.map((application) => (
+        <Card key={application.id} className="mb-3">
+          <Card.Body>
+            <Card.Title>{application.job.title}</Card.Title>
+            <Card.Text>Application: {application.status} · Job: {application.job.status}</Card.Text>
+            {application.status !== "withdrawn" && (
+              <Button variant="danger" onClick={() => withdraw(application.id)}>Withdraw</Button>
+            )}
+          </Card.Body>
+        </Card>
+      ))}
+      {list.length > 0 && <Pagination pageInfo={applications.page_info} setPage={setPage} />}
+    </div>
+  );
 };
 
 export default Applications;

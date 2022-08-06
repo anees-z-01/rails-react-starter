@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import { useContext } from 'react';
 import { Button, Container, Nav, Navbar } from 'react-bootstrap';
 import { NavLink, Outlet, useNavigate } from 'react-router';
 import { AuthContext } from '../providers/AuthProvider';
@@ -6,12 +6,12 @@ import { AuthContext } from '../providers/AuthProvider';
 const Layout = ({ children }) => {
   const navigate = useNavigate();
 
-  const { authenticated, handleLogout } = useContext(AuthContext);
+  const { authenticated, signOut } = useContext(AuthContext);
 
   const renderUILinks = () => {
     if (authenticated) {
       return (
-        <Button onClick={() => handleLogout(navigate)}>Logout</Button>
+        <Button onClick={() => signOut().then(() => navigate('/login'))}>Logout</Button>
       )
     } else {
       return (

@@ -1,26 +1,36 @@
-import { useState, useEffect } from "react";
+import { useContext, useState, useEffect } from "react";
 import { Form, Card } from "react-bootstrap";
 import { Link } from "react-router";
 
 import Pagination from "../components/Pagination";
-import { fetchJobs } from "../api/jobApi";
+import { fetchJobs } from "../api/jobs";
 import { jobStatuses } from "../constants/jobConstants";
 import { dateHelper } from "../helper/dateHelper";
+import { AuthContext } from "../providers/AuthProvider";
 
 const Home = () => {
   const [page, setPage] = useState(1)
   const [filter, setFilter] = useState('open')
   const [jobs, setJobs] = useState(null);
+  const { isAdmin } = useContext(AuthContext);
+
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchJobs(page, filter, setJobs)
+    const controller = new AbortController();
+    setError(null);
+    fetchJobs({ page, filter, signal: controller.signal })
+      .then(setJobs)
+      .catch((err) => err.name !== 'AbortError' && setError(err.message));
+    return () => controller.abort();
   }, [filter, page]);
 
   return (
     <div>
       <h1 className="text-center">Jobs</h1>
-      <Form.Select className="mb-4 w-50 m-auto" onChange={(e) => setFilter(e.target.value)}>
-        {jobStatuses.map(({ label, value }) => (
+      {error && <p role="alert" className="text-danger text-center">{error}</p>}
+      <Form.Select aria-label="Job status" className="mb-4 w-50 m-auto" onChange={(e) => { setPage(1); setFilter(e.target.value); }}>
+        {jobStatuses.filter((s) => !s.adminOnly || isAdmin).map(({ label, value }) => (
           <option key={value} value={value}>{label}</option>
         ))}
       </Form.Select>

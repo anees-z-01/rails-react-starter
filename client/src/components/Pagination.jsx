@@ -1,10 +1,5 @@
-import { useMemo } from "react";
-import { per_page } from "../constants/jobConstants";
-
 const Pagination = ({ pageInfo, setPage }) => {
-  const { count } = pageInfo
-  const page = parseInt(pageInfo.page)
-  const pages = useMemo(() => Math.ceil(count / per_page), [count])
+  const { page, pages } = pageInfo
 
   const prev = page - 1 > 0;
   const next = page + 1 <= pages;
@@ -31,7 +26,7 @@ const Pagination = ({ pageInfo, setPage }) => {
             </li>
           }
           {[...Array(pages)].map((el, index) => (
-            <li key={index.toString} className={`page-item ${index + 1 === page ? "active" : null}`}>
+            <li key={index} className={`page-item ${index + 1 === page ? "active" : null}`}>
               <a
                 className="page-link"
                 onClick={() => onPageChange(index + 1)}
