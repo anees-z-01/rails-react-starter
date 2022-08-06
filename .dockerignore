@@ -1,0 +1,17 @@
+.git
+.github
+.env*
+!.env.example
+client/
+spec/
+docs/
+coverage/
+log/*
+tmp/*
+storage/*
+db/*.sqlite3*
+config/master.key
+config/credentials.yml.enc
+vendor/bundle
+node_modules
+project_venv

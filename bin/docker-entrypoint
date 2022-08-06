@@ -1,0 +1,19 @@
+#!/bin/bash -e
+
+# Without SECRET_KEY_BASE, generate one once and keep it in the storage volume
+# so tokens survive restarts.
+if [ -z "${SECRET_KEY_BASE}" ]; then
+  key_file=storage/.secret_key_base
+  [ -s "$key_file" ] || ruby -rsecurerandom -e 'puts SecureRandom.hex(64)' > "$key_file"
+  SECRET_KEY_BASE="$(cat "$key_file")"
+  export SECRET_KEY_BASE
+fi
+
+if [ "$1" = "bin/rails" ] && [ "$2" = "server" ]; then
+  bin/rails db:prepare
+  if [ "${SEED_DEMO_DATA:-false}" = "true" ]; then
+    bin/rails db:seed
+  fi
+fi
+
+exec "$@"

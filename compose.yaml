@@ -1,0 +1,27 @@
+services:
+  api:
+    build: .
+    environment:
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:-}
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-true}
+      SEED_PASSWORD: ${SEED_PASSWORD:-shortlist-demo}
+    volumes:
+      - api-storage:/rails/storage
+    mem_limit: 768m
+    healthcheck:
+      test: ["CMD", "ruby", "-rnet/http", "-e", "exit Net::HTTP.get_response(URI('http://localhost:3000/up')).is_a?(Net::HTTPSuccess)"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  web:
+    build: ./client
+    ports:
+      - "${WEB_PORT:-8080}:8080"
+    mem_limit: 128m
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  api-storage:
