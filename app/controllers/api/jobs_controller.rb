@@ -23,7 +23,7 @@ module Api
     end
 
     def collection
-      @collection ||= JobsCollection.new(model.open, filter_params).results
+      @collection ||= JobsCollection.new(model.all, filter_params).results
     end
 
     def filter_params

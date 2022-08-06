@@ -7,7 +7,7 @@ class JobApplication < ApplicationRecord
   validates :job_id, uniqueness: { scope: :user_id }
   validate :job_not_closed, on: :create
 
-  enum status: { applied: 0, reviewed: 1, rejected: 2, withdrawn: 3 }
+  enum :status, { applied: 0, reviewed: 1, rejected: 2, withdrawn: 3 }
 
   def job_not_closed
     return if job.present? && %w[open draft].include?(job.status)

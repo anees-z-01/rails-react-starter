@@ -10,14 +10,13 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_08_05_201959) do
-
+ActiveRecord::Schema[8.0].define(version: 2022_08_05_201959) do
   create_table "job_applications", force: :cascade do |t|
     t.integer "job_id", null: false
     t.integer "user_id", null: false
     t.integer "status", default: 0
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["job_id"], name: "index_job_applications_on_job_id"
     t.index ["user_id"], name: "index_job_applications_on_user_id"
   end
@@ -27,8 +26,8 @@ ActiveRecord::Schema.define(version: 2022_08_05_201959) do
     t.string "description", null: false
     t.integer "status", default: 0, null: false
     t.string "slug", null: false
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "users", force: :cascade do |t|
@@ -48,8 +47,8 @@ ActiveRecord::Schema.define(version: 2022_08_05_201959) do
     t.string "image"
     t.string "email"
     t.json "tokens"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.integer "sign_in_count", default: 0
     t.datetime "current_sign_in_at"
     t.datetime "last_sign_in_at"

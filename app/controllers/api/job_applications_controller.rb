@@ -37,7 +37,7 @@ module Api
     private
 
     def collection
-      @collection ||= JobApplicationsCollection.new(current_user, current_user.job_applications.not_withdrawn, filter_params).results
+      @collection ||= JobApplicationsCollection.new(current_user.job_applications, filter_params).results
     end
 
     def job_application

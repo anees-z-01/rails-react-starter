@@ -3,11 +3,7 @@
 class JobsCollection < BaseCollection
   private
 
-  def filter_by_status
-    @relation = model.all
-    status = params[:filter].to_s
-    return unless model.statuses.key?(status)
-
-    filter { @relation.public_send(status) }
+  def filtered
+    status_filter ? relation.where(status: status_filter) : relation.open
   end
 end

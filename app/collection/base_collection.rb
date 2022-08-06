@@ -6,7 +6,7 @@ class BaseCollection
   PAGE = 1
   PER_PAGE = 5
 
-  attr_reader :params
+  attr_reader :params, :relation
 
   def initialize(relation, params)
     @relation = relation
@@ -15,33 +15,23 @@ class BaseCollection
 
   def results
     @results ||= begin
-      ensure_filters
-      paginate
+      pagy, records = pagy(filtered, page: params[:page] || PAGE, limit: params[:per_page] || PER_PAGE)
 
       {
-        data: @relation,
-        page_info: @page_info.vars.slice(:prev, :next, :items, :count, :page)
+        data: records,
+        page_info: { prev: pagy.prev, next: pagy.next, items: pagy.limit, count: pagy.count, page: pagy.page }
       }
     end
   end
 
-  protected
-
-  def ensure_filters
-    filter_by_status if params[:filter]
-  end
-
   private
 
-  def filter
-    @relation = yield
+  def filtered
+    raise NotImplementedError
   end
 
-  def paginate
-    @page_info, @relation = pagy(@relation, page: params[:page] || PAGE, items: params[:per_page] || PER_PAGE)
-  end
-
-  def model
-    @relation.model
+  def status_filter
+    status = params[:filter].to_s
+    status if relation.model.statuses.key?(status)
   end
 end

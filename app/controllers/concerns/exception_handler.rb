@@ -4,8 +4,8 @@ module ExceptionHandler
   extend ActiveSupport::Concern
 
   included do
-    rescue_from ActiveRecord::RecordNotFound, ActiveRecord::RecordNotUnique do |e|
-      render json: { message: e.message }, status: :not_found
+    rescue_from ActiveRecord::RecordNotFound do |e|
+      render json: { message: "Couldn't find #{e.model}" }, status: :not_found
     end
 
     rescue_from ActiveRecord::RecordNotUnique, Pagy::OverflowError do |e|
