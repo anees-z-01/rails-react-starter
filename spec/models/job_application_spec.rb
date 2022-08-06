@@ -9,7 +9,7 @@ RSpec.describe JobApplication, type: :model do
   describe 'Validations' do
     subject { build(:job_application) }
 
-    it { should validate_uniqueness_of(:job_id).scoped_to(:user_id) }
+    it { should validate_uniqueness_of(:job_id).scoped_to(:user_id).with_message("has already been applied to") }
 
     describe '.job_not_closed' do
       let(:job_application) { build(:job_application) }
@@ -19,16 +19,16 @@ RSpec.describe JobApplication, type: :model do
           job_application.job.closed!
 
           expect(job_application.valid?).to be_falsey
-          expect(job_application.errors.full_messages).to include('You cannot apply to a closed job')
+          expect(job_application.errors.full_messages).to include('You can only apply to an open job')
         end
       end
 
       context 'when job is draft' do
-        it 'will create job_application successfully' do
+        it 'will generate validation error' do
           job_application.job.draft!
 
-          expect(job_application.valid?).to be_truthy
-          expect(job_application.save!).to be_truthy
+          expect(job_application.valid?).to be_falsey
+          expect(job_application.errors.full_messages).to include('You can only apply to an open job')
         end
       end
 
@@ -44,6 +44,6 @@ RSpec.describe JobApplication, type: :model do
   end
 
   describe 'Enum' do
-    it { should define_enum_for(:status).with_values(%i[applied reviewed rejected withdrawn]) }
+    it { should define_enum_for(:status).with_values(%i[applied reviewed rejected withdrawn]).validating }
   end
 end

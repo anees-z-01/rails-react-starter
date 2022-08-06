@@ -288,7 +288,7 @@ RSpec.describe 'JobApplications', type: :request do
             post '/api/job_applications/', params: { job_id: closed_job.id }, headers: @headers.as_json
 
             expect(response).to have_http_status(:unprocessable_entity)
-            expect(JSON.parse(response.body)['message']).to include('You cannot apply to a closed job')
+            expect(JSON.parse(response.body)['message']).to include('You can only apply to an open job')
           end
         end
 
@@ -306,13 +306,35 @@ RSpec.describe 'JobApplications', type: :request do
         context 'when job status is draft' do
           let(:draft_job) { create(:job, :draft) }
 
-          it 'returns created job_application' do
+          it 'rejects the application' do
             post '/api/job_applications/', params: { job_id: draft_job.id }, headers: @headers.as_json
 
-            parsed_response = JSON.parse(response.body)
+            expect(response).to have_http_status(:unprocessable_entity)
+            expect(JSON.parse(response.body)['message']).to include('You can only apply to an open job')
+          end
+        end
 
-            expect(response).to have_http_status(:created)
-            expect(parsed_response['job_id']).to eq(draft_job.id)
+        context 'when the user already applied' do
+          it 'rejects a second application' do
+            create(:job_application, job: job, user: user)
+
+            post '/api/job_applications/', params: { job_id: job.id }, headers: @headers.as_json
+
+            expect(response).to have_http_status(:unprocessable_entity)
+            expect(JSON.parse(response.body)['message']).to include('Job has already been applied to')
+          end
+        end
+
+        context 'when user_id or status are sent' do
+          it 'ignores them' do
+            other = create(:user)
+
+            post '/api/job_applications/', params: { job_id: job.id, user_id: other.id, status: 'reviewed' },
+                                           headers: @headers.as_json
+
+            created = JobApplication.find(JSON.parse(response.body)['id'])
+            expect(created.user).to eq(user)
+            expect(created).to be_applied
           end
         end
       end
@@ -339,51 +361,63 @@ RSpec.describe 'JobApplications', type: :request do
         @headers = login_and_return_headers(user)
       end
 
-      context 'when params are missing' do
-        it 'returns job application' do
+      context 'when status is missing' do
+        it 'returns bad request' do
           patch "/api/job_applications/#{job_application.id}", headers: @headers.as_json
 
-          expect(response).to have_http_status(:ok)
-          expect(JSON.parse(response.body)['status']).to eq(job_application.status)
+          expect(response).to have_http_status(:bad_request)
+          expect(JSON.parse(response.body)['message']).to eq('Missing parameter: status')
         end
       end
 
-      context 'when params are present' do
-        context '.applied' do
-          it 'returns job application' do
-            patch "/api/job_applications/#{job_application.id}", params: { status: 'applied' }, headers: @headers.as_json
+      it 'lets the applicant withdraw' do
+        patch "/api/job_applications/#{job_application.id}", params: { status: 'withdrawn' }, headers: @headers.as_json
 
-            expect(response).to have_http_status(:ok)
-            expect(JSON.parse(response.body)['status']).to eq('applied')
-          end
+        expect(response).to have_http_status(:ok)
+        expect(job_application.reload).to be_withdrawn
+      end
+
+      %w[reviewed rejected applied].each do |status|
+        it "does not let the applicant set #{status}" do
+          job_application.withdrawn!
+
+          patch "/api/job_applications/#{job_application.id}", params: { status: status }, headers: @headers.as_json
+
+          expect(response).to have_http_status(:forbidden)
+          expect(job_application.reload).to be_withdrawn
         end
+      end
 
-        context '.withdrawn' do
-          it 'returns job application' do
-            patch "/api/job_applications/#{job_application.id}", params: { status: 'withdrawn' }, headers: @headers.as_json
+      it "returns not found for another user's application" do
+        other = create(:job_application)
 
-            expect(response).to have_http_status(:ok)
-            expect(JSON.parse(response.body)['status']).to eq('withdrawn')
-          end
-        end
+        patch "/api/job_applications/#{other.id}", params: { status: 'withdrawn' }, headers: @headers.as_json
 
-        context '.reviewed' do
-          it 'returns job application' do
-            patch "/api/job_applications/#{job_application.id}", params: { status: 'reviewed' }, headers: @headers.as_json
+        expect(response).to have_http_status(:not_found)
+        expect(other.reload).to be_applied
+      end
+    end
 
-            expect(response).to have_http_status(:ok)
-            expect(JSON.parse(response.body)['status']).to eq('reviewed')
-          end
-        end
+    context 'when logged in as an admin' do
+      let(:admin) { create(:user, :admin) }
+      let(:job_application) { create(:job_application) }
 
-        context '.rejected' do
-          it 'returns job application' do
-            patch "/api/job_applications/#{job_application.id}", params: { status: 'rejected' }, headers: @headers.as_json
+      before(:each) do
+        @headers = login_and_return_headers(admin)
+      end
 
-            expect(response).to have_http_status(:ok)
-            expect(JSON.parse(response.body)['status']).to eq('rejected')
-          end
-        end
+      it "reviews another user's application" do
+        patch "/api/job_applications/#{job_application.id}", params: { status: 'reviewed' }, headers: @headers.as_json
+
+        expect(response).to have_http_status(:ok)
+        expect(job_application.reload).to be_reviewed
+      end
+
+      it 'rejects an unknown status with 422' do
+        patch "/api/job_applications/#{job_application.id}", params: { status: 'hired' }, headers: @headers.as_json
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(JSON.parse(response.body)['message']).to include('Status is not included in the list')
       end
     end
   end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_11_10_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_11_10_120100) do
   create_table "job_applications", force: :cascade do |t|
     t.integer "job_id", null: false
     t.integer "user_id", null: false
@@ -18,6 +18,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_11_10_120000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["job_id"], name: "index_job_applications_on_job_id"
+    t.index ["user_id", "job_id"], name: "index_job_applications_on_user_id_and_job_id", unique: true
     t.index ["user_id"], name: "index_job_applications_on_user_id"
   end
 

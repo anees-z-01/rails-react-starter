@@ -27,17 +27,26 @@ module Api
     end
 
     def update
-      if job_application.update(updation_params)
-        render json: job_application
+      application = current_user.admin? ? JobApplication.find(params[:id]) : job_application
+      status = params.require(:status).to_s
+
+      unless current_user.admin? || JobApplication::APPLICANT_STATUSES.include?(status)
+        return render json: { message: "Only admins can mark an application #{status}" }, status: :forbidden
+      end
+
+      if application.update(status: status)
+        render json: application
       else
-        render json: { message: job_application.errors.full_messages }, status: :unprocessable_entity
+        render json: { message: application.errors.full_messages }, status: :unprocessable_entity
       end
     end
 
     private
 
     def collection
-      @collection ||= JobApplicationsCollection.new(current_user.job_applications, filter_params).results
+      @collection ||= JobApplicationsCollection.new(
+        current_user.job_applications.includes(:job).order(created_at: :desc), filter_params
+      ).results
     end
 
     def job_application
@@ -50,10 +59,6 @@ module Api
 
     def filter_params
       params.permit(:filter, :page, :per_page)
-    end
-
-    def updation_params
-      params.permit(:status)
     end
   end
 end
