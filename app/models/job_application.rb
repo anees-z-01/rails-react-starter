@@ -12,6 +12,6 @@ class JobApplication < ApplicationRecord
   def job_not_closed
     return if job.present? && %w[open draft].include?(job.status)
 
-    errors.add(:base, 'You cannot apply to a closed job')
+    errors.add(:base, "You cannot apply to a closed job")
   end
 end
